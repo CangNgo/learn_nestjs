@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model comment {
+  id         Int      @id @default(autoincrement())
+  ownerId    Int
+  originPost Int
+  text       String
+  media      String[]
+  html       String
+  postId     Int
+  createdAt  DateTime @default(now())
+  createdBy  Int?
+  updatedAt  DateTime
+  updatedBy  Int?
+  deleted    Boolean  @default(false)
+  user       user     @relation(fields: [ownerId], references: [id])
+  post       post     @relation(fields: [postId], references: [id])
+}
+
+model complaint {
+  id            Int           @id @default(autoincrement())
+  ownerId       Int
+  policyId      Int
+  dateTime      DateTime      @default(now())
+  status        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  createdBy     Int?
+  updatedAt     DateTime
+  updatedBy     Int?
+  deleted       Boolean       @default(false)
+  postId        Int
+  userId        Int
+  complainType  Int
+  complaintType complaintType @relation(fields: [complainType], references: [id])
+  post          post          @relation(fields: [postId], references: [id])
+  user          user          @relation(fields: [userId], references: [id])
+}
+
+model complaintType {
+  id        Int         @id @default(autoincrement())
+  name      String
+  complaint complaint[]
+}
+
+model follow {
+  id                         Int      @id @default(autoincrement())
+  follower                   Int
+  followed                   Int
+  dateTime                   DateTime
+  createdAt                  DateTime @default(now())
+  createdBy                  Int?
+  updatedAt                  DateTime
+  updatedBy                  Int?
+  deleted                    Boolean  @default(false)
+  user_follow_followedTouser user     @relation("follow_followedTouser", fields: [followed], references: [id])
+  user_follow_followerTouser user     @relation("follow_followerTouser", fields: [follower], references: [id])
+
+  @@unique([follower, followed])
+}
+
+model hastag {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique
+  description  String
+  createdAt    DateTime       @default(now())
+  createdBy    Int?
+  updatedAt    DateTime
+  updatedBy    Int?
+  deleted      Boolean        @default(false)
+  hastagDetail hastagDetail[]
+}
+
+model hastagDetail {
+  hastagId  Int
+  postId    Int
+  createdAt DateTime @default(now())
+  createdBy Int?
+  updatedAt DateTime
+  updatedBy Int?
+  deleted   Boolean  @default(false)
+  hastag    hastag   @relation(fields: [hastagId], references: [id])
+  post      post     @relation(fields: [postId], references: [id])
+
+  @@id([hastagId, postId])
+}
+
+model likeComment {
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+  createdBy Int?
+  updatedAt DateTime
+  updatedBy Int?
+  deleted   Boolean  @default(false)
+  post      post     @relation(fields: [postId], references: [id])
+  user      user     @relation(fields: [userId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model likePost {
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+  createdBy Int?
+  updatedAt DateTime
+  updatedBy Int?
+  deleted   Boolean  @default(false)
+  post      post     @relation(fields: [postId], references: [id])
+  user      user     @relation(fields: [userId], references: [id])
+
+  @@id([userId, postId])
+}
+
+model policy {
+  id        Int      @id @default(autoincrement())
+  name      String
+  status    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  createdBy Int?
+  updatedAt DateTime
+  updatedBy Int?
+  deleted   Boolean  @default(false)
+}
+
+model post {
+  id           Int            @id @default(autoincrement())
+  ownerId      Int
+  originPost   Int
+  text         String
+  media        String[]
+  html         String
+  isShare      Boolean        @default(false)
+  status       Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  createdBy    Int?
+  updatedAt    DateTime
+  updatedBy    Int?
+  deleted      Boolean        @default(false)
+  comment      comment[]
+  complaint    complaint[]
+  hastagDetail hastagDetail[]
+  likeComment  likeComment[]
+  likePost     likePost[]
+  user         user           @relation(fields: [ownerId], references: [id])
+}
+
+model profile {
+  id        Int      @id @default(autoincrement())
+  lastName  String
+  firstName String
+  bio       String
+  avatar    String
+  banner    String
+  isKOL     Boolean  @default(false)
+  status    Boolean  @default(false)
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  createdBy Int?
+  updatedAt DateTime
+  updatedBy Int?
+  deleted   Boolean  @default(false)
+  user      user     @relation(fields: [userId], references: [id])
+}
+
+model role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  createdAt   DateTime @default(now())
+  createdBy   Int?
+  deleted     Boolean  @default(false)
+  description String
+  updatedAt   DateTime
+  updatedBy   Int?
+  user        user[]
+}
+
+model user {
+  id                           Int           @id @default(autoincrement())
+  email                        String        @unique
+  role_id                      Int
+  createdAt                    DateTime      @default(now())
+  createdBy                    Int?
+  deleted                      Boolean       @default(false)
+  profileId                    Int?
+  updatedAt                    DateTime
+  updatedBy                    Int?
+  username                     String        @unique
+  password                     String
+  comment                      comment[]
+  complaint                    complaint[]
+  follow_follow_followedTouser follow[]      @relation("follow_followedTouser")
+  follow_follow_followerTouser follow[]      @relation("follow_followerTouser")
+  likeComment                  likeComment[]
+  likePost                     likePost[]
+  post                         post[]
+  profile                      profile?
+  role                         role          @relation(fields: [role_id], references: [id])
+}
